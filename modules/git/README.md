@@ -5,7 +5,7 @@ GitHub Actions verify workflow and universal .gitignore. All values extracted fr
 ## Included Items
 
 - `files/.gitignore` — Universal .gitignore. Moved from quality module without content changes.
-- `files/verify.yml` — GitHub Actions workflow. Runs checkout → Node/pnpm install → `pnpm install --frozen-lockfile` → `pnpm verify` on every push/PR.
+- `files/.github/workflows/verify.yml` — GitHub Actions workflow. Runs checkout → Node/pnpm install → `pnpm install --frozen-lockfile` → `pnpm verify` on every push/PR. The nested path mirrors the project layout so the CLI copies it to the location GitHub Actions requires.
 
 ## Manual Application Procedure
 
@@ -19,7 +19,7 @@ From the project root:
 2. Copy verify workflow
    ```sh
    mkdir -p .github/workflows
-   cp <kit>/modules/git/files/verify.yml .github/workflows/verify.yml
+   cp <kit>/modules/git/files/.github/workflows/verify.yml .github/workflows/verify.yml
    ```
 3. Node version (`24.14.1`) and pnpm version (`10.33.2`) in the workflow are verified example values. Adjust to match your project's `engines.node` / `packageManager` values.
 

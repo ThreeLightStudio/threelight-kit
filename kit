@@ -27,9 +27,13 @@ function readModuleDeps(moduleName) {
   const readmePath = path.join(MODULES_DIR, moduleName, 'README.md');
   if (!fs.existsSync(readmePath)) return [];
   const content = fs.readFileSync(readmePath, 'utf-8');
-  const match = content.match(/requires:\s*\[([^\]]+)\]/i);
+  // READMEs declare deps either as `requires: [a, b]` or in prose as `**requires: a**`.
+  const match = content.match(/requires:\s*\[([^\]]+)\]|\*{0,2}requires:\*{0,2}\s*([a-z0-9_ ,-]+)/i);
   if (!match) return [];
-  return match[1].split(',').map(s => s.trim().replace(/['"]/g, ''));
+  return (match[1] ?? match[2])
+    .split(',')
+    .map(s => s.trim().replace(/['"]/g, ''))
+    .filter(Boolean);
 }
 
 function listModules() {
@@ -95,6 +99,11 @@ function mergePackageJson(projectRoot, snippetPath) {
   console.log(`  merged: package.json`);
 }
 
+function hasScript(projectRoot, name) {
+  const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf-8'));
+  return Boolean(pkg.scripts && pkg.scripts[name]);
+}
+
 function runCommand(cmd, cwd) {
   console.log(`$ ${cmd}`);
   try {
@@ -143,15 +152,24 @@ function initCommand(args) {
   console.log('\nInstalling dependencies...');
   runCommand('pnpm install --no-frozen-lockfile', projectRoot);
 
-  // Auto-format before verify
-  console.log('\nAuto-formatting...');
-  runCommand('pnpm run format', projectRoot);
+  // format/verify come from the quality module; only run them when the applied
+  // modules actually provide those scripts
+  const hasFormat = hasScript(projectRoot, 'format');
+  const hasVerify = hasScript(projectRoot, 'verify');
+  if (hasFormat) {
+    console.log('\nAuto-formatting...');
+    runCommand('pnpm run format', projectRoot);
+  } else {
+    console.log('\nNo format script provided by these modules, skipping format.');
+  }
+  if (hasVerify) {
+    console.log('\nRunning verify...');
+    runCommand('pnpm run verify', projectRoot);
+  } else {
+    console.log('\nNo verify script provided by these modules, skipping verify.');
+  }
 
-  // Run verify
-  console.log('\nRunning verify...');
-  runCommand('pnpm run verify', projectRoot);
-
-  console.log('\n✅ Project initialized and verified!');
+  console.log(hasFormat && hasVerify ? '\n✅ Project initialized and verified!' : '\n✅ Project initialized!');
 }
 
 function listCommand() {

@@ -25,9 +25,20 @@ node /path/to/threelight-kit/kit init <preset|module>
 ```
 
 - `kit list` — shows available presets and modules (with their `requires` dependencies).
-- `kit init <preset|module>` — applies the target and its dependencies in the current project: copies config files, merges `package.json` snippets, runs `pnpm install`, `pnpm run format`, and `pnpm run verify`.
+- `kit init <preset|module>` — applies the target and its dependencies in the current project: copies config files, merges `package.json` snippets, runs `pnpm install`, then runs `pnpm run format` and `pnpm run verify` when the applied modules provide those scripts (they come from the quality module).
 
 Manual application (following each module's README) is still supported, but the CLI is the intended path.
+
+## Smoke Tests
+
+`tests/smoke.js` exercises the CLI end to end without touching a real project:
+
+```sh
+npm run test:smoke        # fast tier: usage, list, error paths, and the init flow with a stubbed pnpm (no network)
+npm run test:smoke:full   # also runs a real `kit init react-vite` with a real pnpm install + verify
+```
+
+Each test runs in its own temp directory, removed afterwards. The fast tier puts a fake `pnpm` on `PATH` that records the commands the CLI invokes, so it verifies file copying, `package.json` merging, dependency resolution, and command sequencing without installing anything.
 
 ## Current Operation: Iteration & Verification
 

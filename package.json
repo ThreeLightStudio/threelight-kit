@@ -5,5 +5,9 @@
   "bin": {
     "kit": "./kit"
   },
+  "scripts": {
+    "test:smoke": "node tests/smoke.js",
+    "test:smoke:full": "node tests/smoke.js --full"
+  },
   "dependencies": {}
 }
