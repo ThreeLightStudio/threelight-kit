@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "desktop:prepare": "electrobun prepare",
+    "desktop:config": "DESKTOP_ENV=dev electrobun config --env=dev",
+    "desktop:config:stable": "DESKTOP_ENV=stable electrobun config --env=stable",
+    "desktop:build": "DESKTOP_ENV=dev electrobun build --env=dev",
+    "desktop:build:stable": "DESKTOP_ENV=stable electrobun build --env=stable"
+  },
+  "devDependencies": {
+    "electrobun": "2.0.1"
+  }
+}

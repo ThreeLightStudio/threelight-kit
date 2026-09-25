@@ -1,0 +1,20 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "globalEnv": [
+    "CI",
+    "LANG",
+    "LC_ALL",
+    "NODE_ENV",
+    "NODE_OPTIONS",
+    "RUN_TURBO_RUNTIME",
+    "TZ"
+  ],
+  "noUpdateNotifier": true,
+  "remoteCache": { "enabled": false },
+  "tasks": {
+    "//#task:format:check": {},
+    "//#task:lint": {},
+    "//#task:typecheck": {},
+    "//#task:test": {}
+  }
+}

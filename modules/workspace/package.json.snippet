@@ -1,0 +1,28 @@
+{
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=24.14.1"
+  },
+  "scripts": {
+    "format": "oxfmt --write .",
+    "format:check": "tsx scripts/run-turbo.ts task:format:check",
+    "lint": "tsx scripts/run-turbo.ts task:lint",
+    "lint:fix": "oxlint --fix .",
+    "typecheck": "tsx scripts/run-turbo.ts task:typecheck",
+    "test": "vitest run",
+    "verify": "tsx scripts/run-turbo.ts task:format:check task:lint task:typecheck task:test",
+    "verify:fresh": "tsx scripts/run-turbo.ts --fresh task:format:check task:lint task:typecheck task:test",
+    "task:format:check": "oxfmt --check .",
+    "task:lint": "oxlint .",
+    "task:typecheck": "tsc --noEmit",
+    "task:test": "vitest run"
+  },
+  "devDependencies": {
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
+    "tsx": "^4.20.5",
+    "turbo": "2.10.13",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

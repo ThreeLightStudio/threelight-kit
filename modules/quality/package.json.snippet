@@ -1,0 +1,21 @@
+{
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=24.14.1"
+  },
+  "scripts": {
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "verify": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test"
+  },
+  "devDependencies": {
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
