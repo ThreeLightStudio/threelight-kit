@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+.pnpm-store
+
+# Build outputs
+dist/
+build/
+.turbo/
+.next/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# ===== ↑ Synced from .gitignore (the "Sync from .gitignore" action only rewrites the section above) =====
+.git/
+.hg/
+.svn/
+bower_components/
+jspm_packages/
+__pycache__/
+site-packages/
+venv/
+coverage/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ ZCode default exclusion rules (custom rules go below this line; they are not affected by sync/restore) -----
+# Write custom rules below (this line can be removed)

@@ -1,0 +1,182 @@
+#!/usr/bin/env node
+/**
+ * ThreeLight Kit CLI
+ * Manual-to-automated project initialization
+ */
+
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+const ROOT = path.resolve(__dirname);
+const MODULES_DIR = path.join(ROOT, 'modules');
+const PRESETS_DIR = path.join(ROOT, 'presets');
+
+function readPresets() {
+  if (!fs.existsSync(PRESETS_DIR)) return {};
+  const files = fs.readdirSync(PRESETS_DIR).filter(f => f.endsWith('.json'));
+  const presets = {};
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(PRESETS_DIR, file), 'utf-8');
+    presets[file.replace('.json', '')] = JSON.parse(content);
+  }
+  return presets;
+}
+
+function readModuleDeps(moduleName) {
+  const readmePath = path.join(MODULES_DIR, moduleName, 'README.md');
+  if (!fs.existsSync(readmePath)) return [];
+  const content = fs.readFileSync(readmePath, 'utf-8');
+  const match = content.match(/requires:\s*\[([^\]]+)\]/i);
+  if (!match) return [];
+  return match[1].split(',').map(s => s.trim().replace(/['"]/g, ''));
+}
+
+function listModules() {
+  return fs.readdirSync(MODULES_DIR).filter(d => fs.statSync(path.join(MODULES_DIR, d)).isDirectory());
+}
+
+function listPresets() {
+  return Object.keys(readPresets());
+}
+
+function resolveModules(target) {
+  const presets = readPresets();
+  const modules = listModules();
+
+  if (presets[target]) {
+    return [...new Set(presets[target].modules.flatMap(m => [m, ...readModuleDeps(m)]))];
+  }
+
+  if (modules.includes(target)) {
+    return [...new Set([target, ...readModuleDeps(target)])];
+  }
+
+  console.error(`Unknown module or preset: ${target}`);
+  console.error(`Available presets: ${Object.keys(presets).join(', ')}`);
+  console.error(`Available modules: ${modules.join(', ')}`);
+  process.exit(1);
+}
+
+function copyFiles(srcDir, destDir) {
+  if (!fs.existsSync(srcDir)) return;
+  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    const src = path.join(srcDir, entry.name);
+    const dest = path.join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      fs.mkdirSync(dest, { recursive: true });
+      copyFiles(src, dest);
+    } else {
+      fs.copyFileSync(src, dest);
+      console.log(`  copied: ${path.relative(destDir, dest)}`);
+    }
+  }
+}
+
+function mergePackageJson(projectRoot, snippetPath) {
+  if (!fs.existsSync(snippetPath)) return;
+  const projectPkgPath = path.join(projectRoot, 'package.json');
+  const projectPkg = JSON.parse(fs.readFileSync(projectPkgPath, 'utf-8'));
+  const snippet = JSON.parse(fs.readFileSync(snippetPath, 'utf-8'));
+
+  // Merge scripts
+  projectPkg.scripts = { ...projectPkg.scripts, ...snippet.scripts };
+  // Merge devDependencies
+  projectPkg.devDependencies = { ...projectPkg.devDependencies, ...snippet.devDependencies };
+  // Merge dependencies
+  if (snippet.dependencies) {
+    projectPkg.dependencies = { ...projectPkg.dependencies, ...snippet.dependencies };
+  }
+  // Merge other fields
+  if (snippet.packageManager) projectPkg.packageManager = snippet.packageManager;
+  if (snippet.engines) projectPkg.engines = snippet.engines;
+
+  fs.writeFileSync(projectPkgPath, JSON.stringify(projectPkg, null, 2) + '\n');
+  console.log(`  merged: package.json`);
+}
+
+function runCommand(cmd, cwd) {
+  console.log(`$ ${cmd}`);
+  try {
+    execSync(cmd, { cwd, stdio: 'inherit', shell: true });
+  } catch (e) {
+    console.error(`Command failed: ${cmd}`);
+    process.exit(1);
+  }
+}
+
+function initCommand(args) {
+  const target = args[0];
+  if (!target) {
+    console.error('Usage: kit init <preset|module>');
+    console.error(`Available: ${[...listPresets(), ...listModules()].join(', ')}`);
+    process.exit(1);
+  }
+
+  const projectRoot = process.cwd();
+  const modules = resolveModules(target);
+
+  console.log(`Initializing ${target} with modules: ${modules.join(', ')}`);
+
+  // Ensure package.json exists
+  const pkgPath = path.join(projectRoot, 'package.json');
+  if (!fs.existsSync(pkgPath)) {
+    fs.writeFileSync(pkgPath, JSON.stringify({ name: path.basename(projectRoot), private: true }, null, 2) + '\n');
+  }
+
+  // Apply each module
+  for (const mod of modules) {
+    console.log(`\nApplying module: ${mod}`);
+    const modDir = path.join(MODULES_DIR, mod);
+    const filesDir = path.join(modDir, 'files');
+    const snippetPath = path.join(modDir, 'package.json.snippet');
+
+    if (fs.existsSync(filesDir)) {
+      copyFiles(filesDir, projectRoot);
+    }
+    if (fs.existsSync(snippetPath)) {
+      mergePackageJson(projectRoot, snippetPath);
+    }
+  }
+
+  // Install deps
+  console.log('\nInstalling dependencies...');
+  runCommand('pnpm install --no-frozen-lockfile', projectRoot);
+
+  // Auto-format before verify
+  console.log('\nAuto-formatting...');
+  runCommand('pnpm run format', projectRoot);
+
+  // Run verify
+  console.log('\nRunning verify...');
+  runCommand('pnpm run verify', projectRoot);
+
+  console.log('\n✅ Project initialized and verified!');
+}
+
+function listCommand() {
+  console.log('Presets:');
+  for (const [name, preset] of Object.entries(readPresets())) {
+    console.log(`  ${name}: ${preset.modules.join(', ')}`);
+  }
+  console.log('\nModules:');
+  for (const mod of listModules()) {
+    const deps = readModuleDeps(mod);
+    console.log(`  ${mod}${deps.length ? ` (requires: ${deps.join(', ')})` : ''}`);
+  }
+}
+
+function main() {
+  const [,, cmd, ...args] = process.argv;
+  switch (cmd) {
+    case 'init': initCommand(args); break;
+    case 'list': listCommand(); break;
+    default:
+      console.log(`Usage: kit <command>
+Commands:
+  init <preset|module>  Initialize a new project
+  list                  List available presets and modules`);
+  }
+}
+
+main();

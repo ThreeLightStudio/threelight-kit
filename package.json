@@ -1,0 +1,9 @@
+{
+  "name": "kit",
+  "version": "0.1.0",
+  "description": "ThreeLight project kit CLI",
+  "bin": {
+    "kit": "./kit"
+  },
+  "dependencies": {}
+}

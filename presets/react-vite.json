@@ -1,0 +1,5 @@
+{
+  "name": "react-vite",
+  "description": "React + Vite project preset",
+  "modules": ["quality", "typescript", "react-vite"]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "desktop-react",
+  "description": "Electrobun desktop app preset",
+  "modules": ["quality", "typescript", "react-vite", "electrobun"]
+}
