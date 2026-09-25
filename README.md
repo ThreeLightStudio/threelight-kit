@@ -11,18 +11,31 @@ All configuration sources are from [active/statecarry](../active/statecarry), an
 ## Module Concepts
 
 - **modules/** — independently applicable pieces. Each module covers one concern (formatting, types, quality tools, framework, etc.) and is standalone by default. Dependencies are declared with `requires` in the module README. It contains config files to copy from `files/`, snippets to paste into `package.json`, and manual application steps in the README.
-- **presets/** — module combination recipes. "For a React Vite app, use quality + typescript + react-vite" type combinations. (None yet)
+- **presets/** — module combination recipes. "For a React Vite app, use quality + typescript + react-vite" type combinations.
+- **kit** — the CLI. Applies modules and presets automatically: copies `files/`, merges `package.json` snippets, resolves module dependencies, then installs and verifies.
 
-## Current Operation: Manual Application
+## CLI Usage
 
-No CLI is provided at this stage. Read the READMEs and apply manually.
+From the root of a new project:
 
-1. In a new project, follow each module's README to copy files and reflect snippets in package.json.
+```sh
+# from this repo (or after linking the package)
+node /path/to/threelight-kit/kit list
+node /path/to/threelight-kit/kit init <preset|module>
+```
+
+- `kit list` — shows available presets and modules (with their `requires` dependencies).
+- `kit init <preset|module>` — applies the target and its dependencies in the current project: copies config files, merges `package.json` snippets, runs `pnpm install`, `pnpm run format`, and `pnpm run verify`.
+
+Manual application (following each module's README) is still supported, but the CLI is the intended path.
+
+## Current Operation: Iteration & Verification
+
+The CLI exists in an initial form and is the primary application path. The kit is still in its iteration/verification phase:
+
+1. In a new project, run `kit init <preset|module>`.
 2. When you encounter friction or conflicts during application, fix **this kit**, not the project.
-3. Verify across 2–3 projects.
-4. Then consider CLI-ifying.
-
-In other words, the kit is a product of the iteration/verification phase, and the CLI is the next phase.
+3. Verify across 2–3 projects before extending the CLI further.
 
 ## Currently Available Modules
 
@@ -36,4 +49,11 @@ In other words, the kit is a product of the iteration/verification phase, and th
 | [electrobun](modules/electrobun/) | Electrobun desktop shell config baseline (macOS/Apple Silicon). Requires: react-vite |
 | [agents](modules/agents/) | Agent operational guidance layer — AGENTS.md template + ADR template. Documentation template only (no snippet). Default combination with quality |
 
-Presets don't exist yet. Other module (tailwind etc.) combinations will be added in later phases.
+## Currently Available Presets
+
+| Preset | Modules |
+| --- | --- |
+| [react-vite](presets/react-vite.json) | quality + typescript + react-vite |
+| [desktop-react](presets/desktop-react.json) | quality + typescript + react-vite + electrobun |
+
+More module combinations (tailwind etc.) will be added in later phases.

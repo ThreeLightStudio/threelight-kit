@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Initial CLI (`kit`) with `init <preset|module>` and `list` commands: copies module `files/`, merges `package.json` snippets, resolves `requires` dependencies, runs `pnpm install` / `format` / `verify`
+- Presets: `react-vite`, `desktop-react`
+
+### Changed
+- README updated to reflect the CLI and presets (previous version stated neither existed yet)
+
 ## [0.1.1] - 2026-09-26
 
 ### Fixed
