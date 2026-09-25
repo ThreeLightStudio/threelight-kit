@@ -48,6 +48,7 @@ Without applying the typescript module, only `format:check` and `lint` work prop
 - **`task:*` prefix and turbo wrapper (`scripts/run-turbo.ts`)** — StateCarry's `format:check`, `lint`, `typecheck`, `verify` use `tsx scripts/run-turbo.ts task:*` turbo task wrapper. This belongs to the workspace/monorepo module, so it is not included in quality. Instead, scripts are changed to direct executable commands (`oxfmt --check .`, `oxlint .`, `tsc --noEmit`, `vitest run`) and `verify` is restructured as an `&&` chain. The turbo wrapper role is now handled by the [workspace module](../workspace/).
 - **tsconfig** — Owned by the typescript module. Quality only provides the `typecheck` script (`tsc --noEmit`) and does not touch tsconfig contents.
 - **StateCarry project-specific items** — All product architecture (packages/* structure, check-boundaries, `task:build:artifacts` etc.) and ignorePatterns `.statecarry/**`. Note `.turbo/**` remains in ignores. For single projects not using turbo, it is harmless and can be cleaned up later.
+- **`node_modules/**` from oxlint ignorePatterns** — Default .oxlintrc.json does not include `node_modules/**` in ignorePatterns. If the config file is not copied to a new project, `oxlint` will scan `node_modules` and report numerous warnings/errors. Always verify the `.oxlintrc.json` was copied after applying this module.
 
 ## StateCarry Original Change History
 
