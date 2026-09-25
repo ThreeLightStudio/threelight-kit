@@ -4,6 +4,10 @@ ThreeLight's reusable project standard suite. A kit so you don't have to set up 
 
 All configuration sources are from [active/statecarry](../active/statecarry), and this repo contains only the universalized versions of those configurations — no project-specific elements. It does not invent new settings — it takes verified values from the original and organizes only what's needed.
 
+## Documentation Language
+
+**All documentation, comments, and commit messages in this repository must be written in English.** This applies to README files, module documentation, changelogs, code comments, and any other textual content.
+
 ## Module Concepts
 
 - **modules/** — independently applicable pieces. Each module covers one concern (formatting, types, quality tools, framework, etc.) and is standalone by default. Dependencies are declared with `requires` in the module README. It contains config files to copy from `files/`, snippets to paste into `package.json`, and manual application steps in the README.
