@@ -51,7 +51,7 @@ This policy is generalized and included as the last line of the AGENTS.md templa
 
 ## StateCarry Original Change History
 
-The original is in [active/statecarry](../../../active/statecarry)'s `AGENTS.md` (9 lines) and `docs/decisions/0001-electrobun.md`.
+The original is in [StateCarry](https://github.com/ThreeLightStudio/statecarry)'s `AGENTS.md` (9 lines) and `docs/decisions/0001-electrobun.md`.
 
 - `files/AGENTS.md`: Translated from English to Korean. Removed 2 lines — release credentials (`desktop:build:stable` and `source ~/.config/statecarry/release-env.zsh`), `docs/ux-writing.md` reference (both product-specific). UI line generalized — original's "Follow `docs/ui-principles.md` ..." changed to "If a project's UI principles document exists, follow it; otherwise use impeccable/web-design-guidelines skills". Command contract adjusted to kit version — removed "in-work check" line `pnpm check` (StateCarry's `check` is product-specific via boundaries, kit's quality module scripts have no such thing). Everything else (broad disable prohibition, focus test, verify replacing only `dist/` output, `pnpm-lock.yaml` ownership) is the same as the original meaning.
 - `files/decisions/0000-template.md`: Replaced content from `0001-electrobun.md`'s structure with placeholder guidance. Maintains title format (`# ADR 000X: <Title>`), header (Status/Date/Scope), Context / Decision / Benefits / Trade-offs and consequences sections, and the Decision's numbered list format. Did not include original's Evidence / Uncertainty and measurement policy / Reconsideration triggers sections — these can be added individually in decision documents as needed, not included in the universal template. Left the 4-digit 0-padding ADR convention in the file's top comment.

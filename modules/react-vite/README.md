@@ -64,7 +64,7 @@ In the app location (the folder that becomes the app root per the location-based
 
 ## StateCarry Original Change History
 
-The original is [active/statecarry](../../../active/statecarry)'s `apps/web/vite.config.ts`.
+The original is [StateCarry](https://github.com/ThreeLightStudio/statecarry)'s `apps/web/vite.config.ts`.
 
 - Preserved: `root: resolve(import.meta.dirname)`, `react()` in plugins, `'@'` entry in `resolve.alias` — all unchanged from original.
 - Removed `@tailwindcss/vite` import and `tailwindcss()` plugin (Tailwind owned by separate tailwind module).
