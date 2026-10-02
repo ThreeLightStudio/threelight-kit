@@ -1,8 +1,10 @@
-# threelight-kit
+# ThreeLight Kit
 
-ThreeLight's reusable project standard suite. A kit so you don't have to set up a new project from scratch every time.
+**Reusable configuration modules and runnable starters for TypeScript, React/Vite, web/API, and macOS desktop projects.**
 
-The configuration baseline was extracted from [products/statecarry](../../products/statecarry). The kit keeps those proven settings and adds the entry points, scripts, runtime declarations, and checks needed to turn them into a runnable starter, without copying product-specific behavior.
+[Korean manual guide](README.ko.md) · [CLI usage](#cli-usage) · [Module boundaries](#module-boundaries) · [Manual React/Vite walkthrough](#example-assemble-a-reactvite-project)
+
+The configuration baseline was extracted from [StateCarry](https://github.com/ThreeLightStudio/statecarry). The kit keeps those proven settings and adds the entry points, scripts, runtime declarations, and checks needed to turn them into a runnable starter, without copying product-specific behavior.
 
 ## Documentation Language
 
@@ -19,7 +21,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Version constant
 
-The version lives in exactly one place: the `version` field of the manifest (`package.json`). Never hardcode version strings in source files or docs — when code needs the version, read it from the manifest through a single constant module (e.g. `app-version.ts` re-exporting `APP_VERSION`) or compile-time injection (pattern proven in [products/statecarry](../../products/statecarry)). In pnpm workspaces, workspace package versions stay independent of the release version.
+The version lives in exactly one place: the `version` field of the manifest (`package.json`). Never hardcode version strings in source files or docs — when code needs the version, read it from the manifest through a single constant module (e.g. `app-version.ts` re-exporting `APP_VERSION`) or compile-time injection (pattern proven in [StateCarry](https://github.com/ThreeLightStudio/statecarry)). In pnpm workspaces, workspace package versions stay independent of the release version.
 
 ### Cutting a release
 
@@ -46,8 +48,10 @@ node /path/to/threelight-kit/kit list
 node /path/to/threelight-kit/kit create react-vite ./my-app --dry-run
 node /path/to/threelight-kit/kit create react-vite ./my-app
 cd my-app
-pnpm dev
+npm exec --yes --package=pnpm@10.33.2 -- pnpm run dev
 ```
+
+`create` prints the matching development command from the runtime declaration. The pinned command runs without changing the global pnpm installation.
 
 - `kit create react-vite <directory> [--name <name>] [--dry-run]` — creates a single-package React app with source, a real rendering test, development/build/preview scripts, quality checks, CI, and agent guidance. Installation, initial formatting, and verification run automatically. New project versions start at `0.1.0`.
 - `kit create node-ts <directory>` — creates an ESM Node TypeScript project with NodeNext resolution, watch development, compiled output, and real tests. It has no React or Vite dependencies.
@@ -86,6 +90,8 @@ npm run test:p1:desktop   # full P1 checks plus actual native build on macOS App
 
 Each test runs in its own temp directory, removed afterwards. The fast tier puts a fake `pnpm` on `PATH` that records the commands the CLI invokes, so it verifies file copying, `package.json` merging, dependency resolution, and command sequencing without installing anything.
 
+The npm-packed CLI was verified locally in independent generated projects: React, Node TypeScript, web/API, and an unsigned macOS ARM64 desktop app. Installation, tests, and builds succeeded without configuration edits. Browser checks covered web/API development and production serving; native window and source-watching checks covered the desktop app. Hosted GitHub CI and npm publication are separate from this local evidence.
+
 ## Current Operation: Iteration & Verification
 
 The CLI exists in an initial form and is the primary application path. The kit is still in its iteration/verification phase:
@@ -94,17 +100,43 @@ The CLI exists in an initial form and is the primary application path. The kit i
 2. When you encounter friction or conflicts during application, fix **this kit**, not the project.
 3. Verify across 2–3 projects before extending the CLI further.
 
-## Currently Available Modules
+## Example: assemble a React/Vite project
 
-| Module                            | Description                                                                                                                                      |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [quality](modules/quality/)       | Quality toolset based on oxfmt + oxlint + typescript + vitest                                                                                    |
-| [git](modules/git/)               | GitHub Actions verify workflow + universal .gitignore (moved from quality)                                                                       |
-| [workspace](modules/workspace/)   | Convert single package.json project to centralized pnpm workspace model. Requires: quality                                                       |
-| [typescript](modules/typescript/) | TypeScript compile baseline (single root tsconfig + dynamic vitest alias). Quality's typecheck consumes this tsconfig                            |
-| [react-vite](modules/react-vite/) | React + Vite app form. Vite config baseline (root/alias based on file location). Default combination with typescript module                      |
-| [electrobun](modules/electrobun/) | Electrobun desktop shell config baseline (macOS/Apple Silicon). Requires: react-vite                                                             |
-| [agents](modules/agents/)         | Agent operational guidance layer — AGENTS.md template + ADR template. Documentation template only (no snippet). Default combination with quality |
+This section applies configuration modules to an existing app. For a new app with entry points and tests, use `kit create react-vite <directory>`.
+
+**Input:** an existing React/Vite app with `index.html`, `src/main.tsx`, a `package.json`, and project-owned tests. Those app entries and tests are supplied by the recipient project; the [React/Vite module](modules/react-vite/README.md) supplies configuration and dependencies.
+
+**Assembly:** select `quality + typescript + react-vite`, then apply each module's public files and snippets manually:
+
+| Module                                     | Copy or merge                                                                                                                                                              | Adaptation in a single app                                                                  |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [quality](modules/quality/README.md)       | [Oxfmt](modules/quality/files/.oxfmtrc.json), [Oxlint](modules/quality/files/.oxlintrc.json), [package snippet](modules/quality/package.json.snippet)                      | Merge scripts and tool versions; review existing settings before replacing them.            |
+| [typescript](modules/typescript/README.md) | [tsconfig](modules/typescript/files/tsconfig.json), [Vitest config](modules/typescript/files/vitest.config.ts), [package snippet](modules/typescript/package.json.snippet) | Set `@/*` to `./src/*`, Vitest's exact `@` to `./src`, and `include` to the app/test paths. |
+| [react-vite](modules/react-vite/README.md) | [Vite config](modules/react-vite/files/vite.config.ts), [package snippet](modules/react-vite/package.json.snippet)                                                         | Put the config at the app root; its `@` alias resolves to that root's `src`.                |
+
+Merge dependency groups separately and resolve script conflicts deliberately. The quality snippet declares pnpm 10.33.2 and Node ≥24.14.1 as a baseline; adjust the recipient's requirements and CI together.
+
+**Output:** a manually assembled app configuration whose Vite, TypeScript, and Vitest paths agree. Install and check **from the recipient project**, after merging the snippets:
+
+```sh
+pnpm install
+pnpm run verify
+pnpm exec vite build
+```
+
+The [quality snippet](modules/quality/package.json.snippet) defines `verify` as formatting → lint → typecheck → tests. Its test command uses `--passWithNoTests`: a green gate without tests is not behavior evidence. Supply relevant project tests. These manual adaptation steps are separate from the tested creation templates.
+
+## Module boundaries
+
+| Module                            | Owns                                                 | Combination or prerequisite                                                                  |
+| --------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [quality](modules/quality/)       | Formatter/linter settings, quality scripts and tools | Typecheck needs a project tsconfig; normally paired with TypeScript.                         |
+| [typescript](modules/typescript/) | Root tsconfig, Vitest alias resolution               | Default web/React assumptions; its Vitest config needs Vitest, supplied by quality.          |
+| [react-vite](modules/react-vite/) | Vite root, React plugin, source alias, dependencies  | App entry files belong to the recipient; normally paired with TypeScript.                    |
+| [git](modules/git/)               | Ignore file and GitHub Actions verify template       | The workflow requires quality's `verify`; ignore file can stand alone.                       |
+| [workspace](modules/workspace/)   | pnpm workspace, Turbo tasks and wrapper              | Requires quality; root owns tools, internal packages export source; adjust TypeScript paths. |
+| [electrobun](modules/electrobun/) | Desktop shell configuration                          | Requires React/Vite; baseline targets macOS/Apple Silicon.                                   |
+| [agents](modules/agents/)         | Agent guidance and decision-record templates         | Documentation templates; normally combined with quality.                                     |
 
 ## Currently Available Presets
 
@@ -119,6 +151,16 @@ More module combinations (tailwind etc.) will be added in later phases.
 
 All runnable presets include Git/CI settings, agent guidance, and a verification pipeline that checks formatting, lint, types, collected tests, and the actual build. Creation templates declare their file replacements explicitly and reuse the configuration modules where their contracts match.
 
+## Design choices to inspect
+
+**One concern per module.** Configuration files live under `files/`; package changes are separate snippets; module dependencies are declared in `module.json`, and the READMEs explain application. This keeps configuration conflicts visible during manual application. [Quality procedure](modules/quality/README.md) · [React/Vite procedure](modules/react-vite/README.md)
+
+**Agree on source paths across tools.** Vitest derives aliases from TypeScript paths and adds an explicit exact `@` alias; Vite uses its config location as the app root. Align all three when moving from workspace layout to a single app. [TypeScript contract](modules/typescript/README.md) · [Vite config](modules/react-vite/files/vite.config.ts)
+
+**Verification belongs to the assembled project.** Quality provides direct check commands. The optional workspace module replaces selected scripts with a Turbo wrapper and centralizes dependencies; the optional git module provides a workflow template. Runnable presets add real tests and build verification; recipient projects still need tests for their own behavior. [Workspace merge rules](modules/workspace/README.md) · [CI template](modules/git/files/.github/workflows/verify.yml)
+
 ## Expansion Priorities
 
 The React, Node TypeScript, web/API, and macOS ARM64 desktop starters form the current runnable baseline. Deployment modules, broader environment validation, architecture boundaries, and documentation automation are the next optional extensions. Expo, Godot, Python, and package publishing follow when their native setup and verification can be tested independently. Existing project migration and managed updates are outside this iteration.
+
+[MIT license](LICENSE)
