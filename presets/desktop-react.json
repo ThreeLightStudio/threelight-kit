@@ -1,5 +1,25 @@
 {
   "name": "desktop-react",
   "description": "Electrobun desktop app preset",
-  "modules": ["quality", "typescript", "react-vite", "electrobun"]
+  "modules": ["quality", "typescript", "react-vite", "electrobun"],
+  "create": {
+    "layout": "workspace",
+    "runtime": "node24-desktop",
+    "template": "templates/desktop-react",
+    "modules": ["quality", "typescript", "react-vite", "electrobun", "git", "agents"],
+    "removePackage": ["scripts.desktop:config:stable", "scripts.desktop:build:stable"],
+    "overrides": {
+      "files": [
+        "tsconfig.json",
+        "vitest.config.ts",
+        "vite.config.ts",
+        "electrobun.config.ts",
+        "hutch.config.ts",
+        "apps/desktop/build-profile.ts",
+        "apps/desktop/scripts/build-web.mjs",
+        ".github/workflows/verify.yml"
+      ],
+      "package": ["scripts.test", "scripts.verify"]
+    }
+  }
 }

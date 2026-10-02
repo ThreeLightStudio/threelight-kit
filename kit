@@ -1,66 +1,17 @@
 #!/usr/bin/env node
 /**
  * ThreeLight Kit CLI
- * Manual-to-automated project initialization
+ * Configuration application and runnable project creation.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const { readCatalog, resolveTarget } = require('./lib/catalog');
+const { planCreation, writeCreation } = require('./lib/project-plan');
+const { planInitialization } = require('./lib/init-plan');
+const { selectPackageManager, runPackageCommand, recoveryCommands, checkRuntimeCommands } = require('./lib/package-manager');
 
 const ROOT = path.resolve(__dirname);
-const MODULES_DIR = path.join(ROOT, 'modules');
-const PRESETS_DIR = path.join(ROOT, 'presets');
-
-function readPresets() {
-  if (!fs.existsSync(PRESETS_DIR)) return {};
-  const files = fs.readdirSync(PRESETS_DIR).filter(f => f.endsWith('.json'));
-  const presets = {};
-  for (const file of files) {
-    const content = fs.readFileSync(path.join(PRESETS_DIR, file), 'utf-8');
-    presets[file.replace('.json', '')] = JSON.parse(content);
-  }
-  return presets;
-}
-
-function readModuleDeps(moduleName) {
-  const readmePath = path.join(MODULES_DIR, moduleName, 'README.md');
-  if (!fs.existsSync(readmePath)) return [];
-  const content = fs.readFileSync(readmePath, 'utf-8');
-  // READMEs declare deps either as `requires: [a, b]` or in prose as `**requires: a**`.
-  const match = content.match(/requires:\s*\[([^\]]+)\]|\*{0,2}requires:\*{0,2}\s*([a-z0-9_ ,-]+)/i);
-  if (!match) return [];
-  return (match[1] ?? match[2])
-    .split(',')
-    .map(s => s.trim().replace(/['"]/g, ''))
-    .filter(Boolean);
-}
-
-function listModules() {
-  return fs.readdirSync(MODULES_DIR).filter(d => fs.statSync(path.join(MODULES_DIR, d)).isDirectory());
-}
-
-function listPresets() {
-  return Object.keys(readPresets());
-}
-
-function resolveModules(target) {
-  const presets = readPresets();
-  const modules = listModules();
-
-  if (presets[target]) {
-    return [...new Set(presets[target].modules.flatMap(m => [m, ...readModuleDeps(m)]))];
-  }
-
-  if (modules.includes(target)) {
-    return [...new Set([target, ...readModuleDeps(target)])];
-  }
-
-  console.error(`Unknown module or preset: ${target}`);
-  console.error(`Available presets: ${Object.keys(presets).join(', ')}`);
-  console.error(`Available modules: ${modules.join(', ')}`);
-  process.exit(1);
-}
 
 function copyFiles(srcDir, destDir) {
   if (!fs.existsSync(srcDir)) return;
@@ -104,26 +55,52 @@ function hasScript(projectRoot, name) {
   return Boolean(pkg.scripts && pkg.scripts[name]);
 }
 
-function runCommand(cmd, cwd) {
-  console.log(`$ ${cmd}`);
-  try {
-    execSync(cmd, { cwd, stdio: 'inherit', shell: true });
-  } catch (e) {
-    console.error(`Command failed: ${cmd}`);
-    process.exit(1);
+function parseArgs(args, create = false) {
+  const positional = [];
+  const options = { dryRun: false };
+  for (let index = 0; index < args.length; index++) {
+    const argument = args[index];
+    if (argument === '--dry-run') {
+      if (options.dryRun) throw new Error('Duplicate option: --dry-run');
+      options.dryRun = true;
+    } else if (argument === '--name' && create) {
+      if (options.name !== undefined) throw new Error('Duplicate option: --name');
+      if (!args[index + 1] || args[index + 1].startsWith('--')) throw new Error('--name requires a project name');
+      options.name = args[++index];
+    } else if (argument.startsWith('-')) throw new Error(`Unknown option: ${argument}`);
+    else positional.push(argument);
   }
+  if (positional.length > (create ? 2 : 1)) throw new Error('Unexpected arguments');
+  return { positional, options };
 }
 
 function initCommand(args) {
-  const target = args[0];
+  const { positional: [target], options } = parseArgs(args);
+  const catalog = readCatalog(ROOT);
   if (!target) {
-    console.error('Usage: kit init <preset|module>');
-    console.error(`Available: ${[...listPresets(), ...listModules()].join(', ')}`);
-    process.exit(1);
+    throw new Error(`Usage: kit init <preset|module> [--dry-run]\nAvailable: ${[...catalog.presets.keys(), ...catalog.modules.keys()].join(', ')}`);
   }
 
   const projectRoot = process.cwd();
-  const modules = resolveModules(target);
+  const modules = resolveTarget(catalog, target);
+
+  if (options.dryRun) {
+    const plan = planInitialization(catalog, modules, projectRoot);
+    console.log(`Dry run: init ${target}`);
+    console.log(`Destination: ${projectRoot}`);
+    console.log(`Modules: ${modules.join(', ')}`);
+    console.log('Files to copy or merge:');
+    for (const file of plan.files) console.log(`  ${file}`);
+    console.log(`Contributed package fields: ${plan.fields.join(', ') || '(none)'}`);
+    console.log('Resulting package settings:');
+    console.log(JSON.stringify(plan.packageJson, null, 2));
+    console.log('Steps:');
+    console.log('  pnpm install --no-frozen-lockfile');
+    if (plan.packageJson.scripts?.format) console.log('  pnpm run format');
+    if (plan.packageJson.scripts?.verify) console.log('  pnpm run verify');
+    console.log('No files, downloads, or project scripts were changed.');
+    return;
+  }
 
   console.log(`Initializing ${target} with modules: ${modules.join(', ')}`);
 
@@ -136,7 +113,7 @@ function initCommand(args) {
   // Apply each module
   for (const mod of modules) {
     console.log(`\nApplying module: ${mod}`);
-    const modDir = path.join(MODULES_DIR, mod);
+    const modDir = catalog.modules.get(mod).directory;
     const filesDir = path.join(modDir, 'files');
     const snippetPath = path.join(modDir, 'package.json.snippet');
 
@@ -150,7 +127,8 @@ function initCommand(args) {
 
   // Install deps
   console.log('\nInstalling dependencies...');
-  runCommand('pnpm install --no-frozen-lockfile', projectRoot);
+  const manager = { command: 'pnpm', prefix: [] };
+  runPackageCommand(manager, ['install', '--no-frozen-lockfile'], projectRoot);
 
   // format/verify come from the quality module; only run them when the applied
   // modules actually provide those scripts
@@ -158,13 +136,13 @@ function initCommand(args) {
   const hasVerify = hasScript(projectRoot, 'verify');
   if (hasFormat) {
     console.log('\nAuto-formatting...');
-    runCommand('pnpm run format', projectRoot);
+    runPackageCommand(manager, ['run', 'format'], projectRoot);
   } else {
     console.log('\nNo format script provided by these modules, skipping format.');
   }
   if (hasVerify) {
     console.log('\nRunning verify...');
-    runCommand('pnpm run verify', projectRoot);
+    runPackageCommand(manager, ['run', 'verify'], projectRoot);
   } else {
     console.log('\nNo verify script provided by these modules, skipping verify.');
   }
@@ -172,14 +150,64 @@ function initCommand(args) {
   console.log(hasFormat && hasVerify ? '\n✅ Project initialized and verified!' : '\n✅ Project initialized!');
 }
 
-function listCommand() {
+function createCommand(args) {
+  const { positional: [preset, directory], options } = parseArgs(args, true);
+  if (!preset || !directory) throw new Error('Usage: kit create <preset> <directory> [--name <name>] [--dry-run]');
+  const plan = planCreation(ROOT, preset, directory, { name: options.name });
+  if (options.dryRun) {
+    console.log(`Dry run: create ${preset}`);
+    console.log(`Destination: ${plan.destination}`);
+    console.log(`Project: ${plan.name}`);
+    console.log(`Modules: ${plan.modules.join(', ')}`);
+    console.log(`Runtime: Node ${plan.runtime.nodeRange}; pnpm ${plan.runtime.pnpm}; CI ${plan.runtime.runner}`);
+    console.log(`Prerequisites: ${plan.compatibility.message}`);
+    if (plan.runtime.commands?.length) console.log(`Required commands: ${plan.runtime.commands.join(', ')}`);
+    console.log('Files:');
+    for (const file of [...plan.files.keys()].sort()) console.log(`  ${file}`);
+    console.log('Package settings:');
+    console.log(JSON.stringify(plan.packageJson, null, 2));
+    console.log('Steps with pinned pnpm (a matching installed pnpm can run these directly):');
+    for (const command of recoveryCommands(plan.destination, plan.runtime)) console.log(`  ${command}`);
+    console.log('No files, downloads, or project scripts were changed.');
+    return;
+  }
+  if (!plan.compatibility.ok) throw new Error(plan.compatibility.message);
+  checkRuntimeCommands(plan.runtime);
+  console.log(`Creating ${plan.name} with modules: ${plan.modules.join(', ')}`);
+  try {
+    writeCreation(plan);
+    const manager = selectPackageManager(plan.runtime, plan.destination);
+    console.log('\nInstalling dependencies...');
+    runPackageCommand(manager, ['install', '--no-frozen-lockfile'], plan.destination);
+    console.log('\nAuto-formatting...');
+    runPackageCommand(manager, ['run', 'format'], plan.destination);
+    console.log('\nRunning verify...');
+    runPackageCommand(manager, ['run', 'verify'], plan.destination);
+  } catch (error) {
+    console.error(`Creation failed: ${error.message}`);
+    console.error('Generated files were preserved. Recovery commands:');
+    for (const command of recoveryCommands(plan.destination, plan.runtime)) console.error(`  ${command}`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log('\n✅ Project created and verified!');
+  console.log(`Project directory: ${plan.destination}`);
+  console.log('Start development:');
+  console.log(`  ${recoveryCommands(plan.destination, plan.runtime)[0]}`);
+  console.log(`  npm exec --yes --package=pnpm@${plan.runtime.pnpm} -- pnpm run dev`);
+}
+
+function listCommand(args) {
+  if (args.length) throw new Error('Usage: kit list');
+  const catalog = readCatalog(ROOT);
   console.log('Presets:');
-  for (const [name, preset] of Object.entries(readPresets())) {
-    console.log(`  ${name}: ${preset.modules.join(', ')}`);
+  for (const [name, preset] of catalog.presets) {
+    const kind = preset.configuration === false ? 'runnable only' : preset.create ? 'runnable + configuration' : 'configuration only';
+    console.log(`  ${name}: ${preset.modules.join(', ')} (${kind})`);
   }
   console.log('\nModules:');
-  for (const mod of listModules()) {
-    const deps = readModuleDeps(mod);
+  for (const [mod, module] of catalog.modules) {
+    const deps = module.requires;
     console.log(`  ${mod}${deps.length ? ` (requires: ${deps.join(', ')})` : ''}`);
   }
 }
@@ -188,13 +216,20 @@ function main() {
   const [,, cmd, ...args] = process.argv;
   switch (cmd) {
     case 'init': initCommand(args); break;
-    case 'list': listCommand(); break;
+    case 'create': createCommand(args); break;
+    case 'list': listCommand(args); break;
     default:
       console.log(`Usage: kit <command>
 Commands:
-  init <preset|module>  Initialize a new project
-  list                  List available presets and modules`);
+  create <preset> <directory> [--name <name>] [--dry-run]  Create a runnable project
+  init <preset|module> [--dry-run]                        Apply configuration modules
+  list                                                  List available presets and modules`);
   }
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  console.error(error.message);
+  process.exitCode = 1;
+}

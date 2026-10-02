@@ -350,7 +350,7 @@ check('init electrobun: resolves declared react-vite dependency, skips format/ve
 
     const r = runKit(['init', 'electrobun'], { cwd: dir, env });
     assertEq(r.status, 0, `exit status (stderr: ${r.stderr.slice(0, 200)})`);
-    assertIncludes(r.stdout, 'Initializing electrobun with modules: electrobun, react-vite', 'dependency resolution');
+    assertIncludes(r.stdout, 'Initializing electrobun with modules: react-vite, electrobun', 'dependency-first resolution');
     assertIncludes(r.stdout, '✅', 'stdout');
     assertFileExists(path.join(dir, 'electrobun.config.ts'), 'electrobun files copied');
     assertFileExists(path.join(dir, 'vite.config.ts'), 'react-vite files copied via dependency');
@@ -374,7 +374,7 @@ check('init git: resolves quality, places workflow where GitHub Actions expects 
 
     const r = runKit(['init', 'git'], { cwd: dir, env });
     assertEq(r.status, 0, `exit status (stderr: ${r.stderr.slice(0, 200)})`);
-    assertIncludes(r.stdout, 'Initializing git with modules: git, quality', 'dependency resolution');
+    assertIncludes(r.stdout, 'Initializing git with modules: quality, git', 'dependency-first resolution');
     assertIncludes(r.stdout, '✅', 'stdout');
     assertFileExists(path.join(dir, '.github', 'workflows', 'verify.yml'), 'git workflow at GitHub Actions path');
     assertFileExists(path.join(dir, '.gitignore'), 'git .gitignore copied');

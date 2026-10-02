@@ -1,0 +1,16 @@
+{
+  "name": "node-ts",
+  "description": "Node.js + TypeScript command-line project preset",
+  "configuration": false,
+  "modules": ["quality", "typescript", "git", "agents"],
+  "create": {
+    "layout": "single-package",
+    "runtime": "node24",
+    "template": "templates/node-ts",
+    "modules": ["quality", "typescript", "git", "agents"],
+    "overrides": {
+      "files": ["tsconfig.json", "vitest.config.ts", ".github/workflows/verify.yml"],
+      "package": ["scripts.test", "scripts.verify"]
+    }
+  }
+}

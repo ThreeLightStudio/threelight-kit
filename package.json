@@ -5,9 +5,27 @@
   "bin": {
     "kit": "./kit"
   },
+  "files": [
+    "kit",
+    "lib",
+    "modules",
+    "presets",
+    "runtimes",
+    "templates",
+    "docs",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
+    "test": "node tests/smoke.js && node tests/create.js && node tests/p1.js",
     "test:smoke": "node tests/smoke.js",
-    "test:smoke:full": "node tests/smoke.js --full"
+    "test:smoke:full": "node tests/smoke.js --full",
+    "test:create": "node tests/create.js",
+    "test:create:full": "node tests/create.js --full",
+    "test:p1": "node tests/p1.js",
+    "test:p1:full": "node tests/p1.js --full",
+    "test:p1:desktop": "node tests/p1.js --full --desktop",
+    "test:full": "node tests/smoke.js --full && node tests/create.js --full && node tests/p1.js --full"
   },
   "dependencies": {}
 }

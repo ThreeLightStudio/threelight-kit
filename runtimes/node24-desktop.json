@@ -1,0 +1,9 @@
+{
+  "node": "24.14.1",
+  "nodeRange": ">=24.14.1 <25",
+  "pnpm": "10.33.2",
+  "runner": "macos-15-arm64",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "commands": ["tar"]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "web-api",
+  "description": "React + Vite web app with a Node HTTP API",
+  "configuration": false,
+  "modules": ["quality", "typescript", "react-vite", "git", "agents"],
+  "create": {
+    "layout": "workspace",
+    "runtime": "node24",
+    "template": "templates/web-api",
+    "modules": ["quality", "typescript", "react-vite", "git", "agents"],
+    "overrides": {
+      "files": [
+        "tsconfig.json",
+        "vitest.config.ts",
+        "vite.config.ts",
+        ".github/workflows/verify.yml"
+      ],
+      "package": ["scripts.test", "scripts.verify"]
+    }
+  }
+}

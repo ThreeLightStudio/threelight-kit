@@ -4,6 +4,10 @@ React + Vite app form module. All values extracted from StateCarry, with project
 
 Only `vite.config.ts` is included because: app entries (index.html, src/main.tsx) are the project's, and this module provides only the verified config baseline.
 
+For a complete new app, use `kit create react-vite <directory>`. Creation adds the
+entry points and a `src`-based TypeScript/Vitest profile from `templates/react-vite`.
+Applying this module with `init` remains configuration-only.
+
 ## Location-based Point Contract
 
 Both `root` and `alias` are based on `import.meta.dirname`. Therefore, the folder where `vite.config.ts` is placed becomes the app root — whether it's the root of a single project or `apps/<app>/` within a workspace. Moving files moves the reference point with them.
@@ -64,7 +68,7 @@ In the app location (the folder that becomes the app root per the location-based
 
 ## StateCarry Original Change History
 
-The original is [active/statecarry](../../../active/statecarry)'s `apps/web/vite.config.ts`.
+The original is [products/statecarry](../../../../products/statecarry)'s `apps/web/vite.config.ts`.
 
 - Preserved: `root: resolve(import.meta.dirname)`, `react()` in plugins, `'@'` entry in `resolve.alias` — all unchanged from original.
 - Removed `@tailwindcss/vite` import and `tailwindcss()` plugin (Tailwind owned by separate tailwind module).

@@ -1,5 +1,20 @@
 {
   "name": "react-vite",
   "description": "React + Vite project preset",
-  "modules": ["quality", "typescript", "react-vite"]
+  "modules": ["quality", "typescript", "react-vite"],
+  "create": {
+    "layout": "single-package",
+    "runtime": "node24",
+    "template": "templates/react-vite",
+    "modules": ["quality", "typescript", "react-vite", "git", "agents"],
+    "overrides": {
+      "files": [
+        "tsconfig.json",
+        "vitest.config.ts",
+        "vite.config.ts",
+        ".github/workflows/verify.yml"
+      ],
+      "package": ["scripts.test", "scripts.verify"]
+    }
+  }
 }

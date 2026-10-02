@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/desktop-dev.mjs",
+    "dev:web": "vite",
+    "build": "pnpm run desktop:build",
+    "build:web": "vite build",
+    "preview": "node scripts/desktop-dev.mjs run",
+    "preview:web": "vite preview",
+    "desktop:dev": "node scripts/desktop-dev.mjs",
+    "test": "vitest run",
+    "verify": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
+  }
+}
